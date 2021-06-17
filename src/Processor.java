@@ -48,7 +48,9 @@ public class Processor {
         R1 = (byte)((IR>>>6)&((1<<6)-1));
         R2orIMM = (byte) (IR &((1<<6)-1));
     }
-
+    // yahia first 4
+    //omar next 4
+    //khater last4
     private void execute(){
         switch (opCode){
             case 0 : ADD();break;

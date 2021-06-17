@@ -28,6 +28,7 @@ public class Assembler {
     }
 
     // to parse the line of assembly to binary and added to instructionMemory at the given index;
+    // mustafa and youssef
     void parseInstruction(String line , int index){
 
     }
