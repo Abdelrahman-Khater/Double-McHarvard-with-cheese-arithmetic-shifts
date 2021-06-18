@@ -34,24 +34,25 @@ public class Assembler {
     void parseInstruction(String line , int index){
         line=line.toUpperCase();
         String[] tmp=line.split(" ");
-        int instruction=0;
+        int opcode=0;
         int R1index=Integer.parseInt(tmp[1].substring(1));
         int R2orimm=tmp[2].charAt(0)=='R'?Integer.parseInt(tmp[2].substring(1)):Integer.parseInt(tmp[2]);
         switch (tmp[0]){
-            case "ADD":instruction=((0<<6|R1index)<<6)|R2orimm;break;
-            case "SUB":instruction=(1<<6|R1index)<<6|R2orimm;break;
-            case "MUL":instruction=(2<<6|R1index)<<6|R2orimm;break;
-            case "MOVI":instruction=(3<<6|R1index)<<6|R2orimm;break;
-            case "BEQZ":instruction=(4<<6|R1index)<<6|R2orimm;break;
-            case "ANDI":instruction=(5<<6|R1index)<<6|R2orimm;break;
-            case "EOR":instruction=(6<<6|R1index)<<6|R2orimm;break;
-            case "BR":instruction=(7<<6|R1index)<<6|R2orimm;break;
-            case "SAL":instruction=(8<<6|R1index)<<6|R2orimm;break;
-            case "SAR":instruction=(9<<6|R1index)<<6|R2orimm;break;
-            case "LDR":instruction=(10<<6|R1index)<<6|R2orimm;break;
-            case "STR":instruction=(11<<6|R1index)<<6|R2orimm;break;
+            case "ADD":opcode=0;break;
+            case "SUB":opcode=1;;break;
+            case "MUL":opcode=2;break;
+            case "MOVI":opcode=3;break;
+            case "BEQZ":opcode=4;break;
+            case "ANDI":opcode=5;break;
+            case "EOR":opcode=6;break;
+            case "BR":opcode=7;break;
+            case "SAL":opcode=8;break;
+            case "SAR":opcode=9;break;
+            case "LDR":opcode=10;break;
+            case "STR":opcode=11;break;
             default:
         }
-        instructionMemory[index]= (short) instruction;
+        short instruction= (short) (((opcode<<6|R1index)<<6)|R2orimm);
+        instructionMemory[index]= instruction;
     }
 }
