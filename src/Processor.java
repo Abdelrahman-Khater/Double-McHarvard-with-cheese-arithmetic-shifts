@@ -67,8 +67,22 @@ public class Processor {
             case 3:
                 MOVI();
                 break;
+            case 8:
+                SAL();
+                break;
+            case 9:
+                SAR();
+                break;
+            case 10:
+                LDR();
+                break;
+            case 11:
+                STR();
+                break;
         }
     }
+
+
 
     private void setCarry(boolean value) {
         statusRegister[C_INDEX] = value;
@@ -157,4 +171,35 @@ public class Processor {
     private void MOVI() {
         registers[R1] = R2orIMM;
     }
+
+
+    private void SAL() {
+        int res = registers[R1];
+        res = res<<R2orIMM;
+        byte byteRes = (byte) res;
+        setNegative(byteRes < 0);
+        setZero(byteRes == 0);
+        registers[R1] = byteRes;
+    }
+
+    private void SAR() {
+        int res = registers[R1];
+        res = res>>R2orIMM;
+        byte byteRes = (byte) res;
+        setNegative(byteRes < 0);
+        setZero(byteRes == 0);
+        registers[R1] = byteRes;
+    }
+
+    private void LDR() {
+        registers[R1] = dataMemory[R2orIMM];
+    }
+
+    private void STR() {
+        dataMemory[R2orIMM] = registers[R1];
+    }
+
+
+
+
 }
