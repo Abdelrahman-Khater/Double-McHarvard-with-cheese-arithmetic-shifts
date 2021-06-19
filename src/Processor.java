@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class Processor {
     private static final int C_INDEX = 4, V_INDEX = 3, N_INDEX = 2, S_INDEX = 1, Z_INDEX = 0;
     private final int RSize = 64;
@@ -6,21 +8,24 @@ public class Processor {
     private short[] instructionMemory;
     private byte[] registers;
     private boolean[] statusRegister;
+    private int numberOfInstructions;
     private short PC;
     private short IR;
     private byte opCode;
     private byte R1;
     private byte R2orIMM;
 
-    private int clockCycles;
+    private boolean fetchFlag;
+    private boolean decodeFlag;
+    private boolean executeFlag;
 
-    public Processor(short[] instructionMemory) {
+    public Processor(short[] instructionMemory, int numberOfInstructions) {
         this.instructionMemory = instructionMemory;
+        this.numberOfInstructions = numberOfInstructions;
         dataMemory = new byte[DMSize];
         registers = new byte[RSize];
         statusRegister = new boolean[8];
         PC = 0;
-        clockCycles = 0;
         runInstructions();
         printAllRegisters();
         printInstructionMemory();
@@ -28,16 +33,64 @@ public class Processor {
     }
 
     private void printDataMemory() {
+        System.out.printf("*Content of the Data Memory:\n%s\n", Arrays.toString(dataMemory));
     }
 
     private void printInstructionMemory() {
+        System.out.printf("*Content of the Instruction Memory:\n%s\n", Arrays.toString(instructionMemory));
     }
 
     private void printAllRegisters() {
+        System.out.println("*Content of the registers:");
+        for(int i = 0; i < RSize; i++) {
+            //System.out.printf("Content of register R%d is: %s:\n", i, fixNumberOfBits(Integer.toBinaryString(registers[i]), 8));
+            System.out.printf("Content of register R%d is: %s:\n", i, registers[i]);
+        }
+        String SREG = "";
+        for(int i = 0; i < 8; i++)
+            SREG = (statusRegister[i] ? "1" : "0") + SREG;
+        System.out.printf("Content of register SREG is: %s:\n", SREG);
+        System.out.printf("Content of register PC is: %s:\n", PC);
     }
 
     private void runInstructions() {
+        int clockCycles = 0;
+        while (true) {
+            if (PC < numberOfInstructions)
+                fetchFlag = true;
+            if(!fetchFlag && ! decodeFlag && !executeFlag)
+                break;
 
+            System.out.printf("*Current Clock Cycle: %d\n", ++clockCycles);
+            if (executeFlag) {
+                System.out.printf("*Current instruction being executed: %d\n", PC - 2);
+                System.out.printf("*Input Parameters for execution:\nOperation: %s\nR1: %s\nR2orIMM: %s\n", fixNumberOfBits(Integer.toBinaryString(opCode), 4),
+                        fixNumberOfBits(Integer.toBinaryString(R1), 6), fixNumberOfBits(Integer.toBinaryString(R2orIMM), 6));
+                execute();
+                executeFlag = false;
+            }
+            if (decodeFlag) {
+                System.out.printf("*Current instruction being decoded: %d\n", PC - 1);
+                System.out.printf("*Input Parameters for decoding:\nInstruction: %s\n", fixNumberOfBits(Integer.toBinaryString(IR), 16));
+                decode();
+                executeFlag = true;
+                decodeFlag = false;
+            }
+            if (fetchFlag) {
+                System.out.printf("*Current instruction being fetched: %d\n", PC);
+                System.out.printf("*Input Parameters for fetching:\nPC: %d\n", PC);
+                fetch();
+                decodeFlag = true;
+                fetchFlag = false;
+            }
+            System.out.print("\n");
+        }
+    }
+
+    private void emptyPipeLine() {
+        fetchFlag = false;
+        decodeFlag = false;
+        executeFlag = false;
     }
 
     private void fetch() {
@@ -94,10 +147,6 @@ public class Processor {
         }
     }
 
-    private void emptyPipeLine() {
-
-    }
-
     private void setCarry(boolean value) {
         statusRegister[C_INDEX] = value;
     }
@@ -123,7 +172,7 @@ public class Processor {
     }
 
     public String fixNumberOfBits(String number, int numberOfBits) {
-        while(number.length() < numberOfBits)
+        while (number.length() < numberOfBits)
             number = number.charAt(0) + number;
         return number.substring(number.length() - numberOfBits, number.length());
     }
@@ -193,20 +242,21 @@ public class Processor {
     }
 
     private void BEQZ() {
-        if(registers[R1] == 0)
-            PC = (short)(PC - 1 + R2orIMM);
-        emptyPipeLine();
+        if (registers[R1] == 0) {
+            PC = (short) (PC - 1 + R2orIMM);
+            emptyPipeLine();
+        }
     }
 
     private void ANDI() {
-        byte res = (byte)(registers[R1] & R2orIMM);
+        byte res = (byte) (registers[R1] & R2orIMM);
         setNegative(res < 0);
         setZero(res == 0);
         registers[R1] = res;
     }
 
     private void EOR() {
-        byte res = (byte)(registers[R1] ^ R2orIMM);
+        byte res = (byte) (registers[R1] ^ R2orIMM);
         setNegative(res < 0);
         setZero(res == 0);
         registers[R1] = res;
@@ -222,7 +272,7 @@ public class Processor {
 
     private void SAL() {
         int res = registers[R1];
-        res = res<<R2orIMM;
+        res = res << R2orIMM;
         byte byteRes = (byte) res;
         setNegative(byteRes < 0);
         setZero(byteRes == 0);
@@ -231,7 +281,7 @@ public class Processor {
 
     private void SAR() {
         int res = registers[R1];
-        res = res>>R2orIMM;
+        res = res >> R2orIMM;
         byte byteRes = (byte) res;
         setNegative(byteRes < 0);
         setZero(byteRes == 0);
