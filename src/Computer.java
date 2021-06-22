@@ -1,3 +1,5 @@
+import jdk.jshell.EvalException;
+
 public class Computer {
     final int IMSize = 1 << 10;
     short[] instructionMemory;
@@ -15,6 +17,5 @@ public class Computer {
     public static void main(String[] args) {
         String filePath = "assembly.txt";
         Computer computer = new Computer(filePath);
-
     }
 }

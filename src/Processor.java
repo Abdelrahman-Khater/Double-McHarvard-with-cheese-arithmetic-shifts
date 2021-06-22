@@ -238,18 +238,18 @@ public class Processor {
     }
 
     private void MOVI() {
-        registers[R1] = R2orIMM;
+        registers[R1] = valueofimm(R2orIMM);
     }
 
     private void BEQZ() {
         if (registers[R1] == 0) {
-            PC = (short) (PC - 1 + R2orIMM);
+            PC = (short) (PC - 1 + valueofimm(R2orIMM));
             emptyPipeLine();
         }
     }
 
     private void ANDI() {
-        byte res = (byte) (registers[R1] & R2orIMM);
+        byte res = (byte) (registers[R1] & valueofimm(R2orIMM));
         setNegative(res < 0);
         setZero(res == 0);
         registers[R1] = res;
@@ -272,7 +272,7 @@ public class Processor {
 
     private void SAL() {
         int res = registers[R1];
-        res = res << R2orIMM;
+        res = res << valueofimm(R2orIMM);
         byte byteRes = (byte) res;
         setNegative(byteRes < 0);
         setZero(byteRes == 0);
@@ -281,7 +281,7 @@ public class Processor {
 
     private void SAR() {
         int res = registers[R1];
-        res = res >> R2orIMM;
+        res = res >> valueofimm(R2orIMM);
         byte byteRes = (byte) res;
         setNegative(byteRes < 0);
         setZero(byteRes == 0);
@@ -294,5 +294,12 @@ public class Processor {
 
     private void STR() {
         dataMemory[R2orIMM] = registers[R1];
+    }
+
+    public static byte valueofimm(byte R2orimm){
+        if ((R2orimm & (1 << (6 - 1)))==(0b100000))
+            return (byte) (R2orimm|0b11100000);
+        else
+            return (R2orimm);
     }
 }
