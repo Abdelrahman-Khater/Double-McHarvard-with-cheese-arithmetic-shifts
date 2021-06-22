@@ -296,7 +296,7 @@ public class Processor {
         dataMemory[R2orIMM] = registers[R1];
     }
 
-    public static byte valueofimm(byte R2orimm){
+    public byte valueofimm(byte R2orimm){
         if ((R2orimm & (1 << (6 - 1)))==(0b100000))
             return (byte) (R2orimm|0b11100000);
         else
