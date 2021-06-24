@@ -19,6 +19,7 @@ public class Processor {
     private boolean decodeFlag;
     private boolean executeFlag;
 
+
     public Processor(short[] instructionMemory, int numberOfInstructions) {
         this.instructionMemory = instructionMemory;
         this.numberOfInstructions = numberOfInstructions;
@@ -33,56 +34,104 @@ public class Processor {
     }
 
     private void printDataMemory() {
-        System.out.printf("*Content of the Data Memory:\n%s\n", Arrays.toString(dataMemory));
+//        System.out.printf("*Content of the Data Memory:\n%s\n", Arrays.toString(dataMemory));
+        System.out.println("*Content of the Data Memory:");
+        for(int i = 0; i < DMSize; i++) {
+            System.out.printf("Content of Data Memory[%d] is: %s\n", i, dataMemory[i]);
+        }
+        System.out.print("\n");
+        System.out.println("---------------------------------------------------------------------------------------");
+        System.out.println("---------------------------------------------------------------------------------------");
+        System.out.print("\n");
     }
 
     private void printInstructionMemory() {
-        System.out.printf("*Content of the Instruction Memory:\n%s\n", Arrays.toString(instructionMemory));
+//        System.out.printf("*Content of the Instruction Memory:\n%s\n", Arrays.toString(instructionMemory));
+        System.out.println("*Content of the Instruction Memory:");
+        for(int i = 0; i < instructionMemory.length; i++) {
+            System.out.printf("Content of Instruction Memory[%d] is: %s\n", i, instructionMemory[i]);
+        }
+        System.out.print("\n");
+        System.out.println("---------------------------------------------------------------------------------------");
+        System.out.println("---------------------------------------------------------------------------------------");
+        System.out.print("\n");
     }
 
     private void printAllRegisters() {
         System.out.println("*Content of the registers:");
         for(int i = 0; i < RSize; i++) {
             //System.out.printf("Content of register R%d is: %s:\n", i, fixNumberOfBits(Integer.toBinaryString(registers[i]), 8));
-            System.out.printf("Content of register R%d is: %s:\n", i, registers[i]);
+            System.out.printf("Content of register R%d is: %s\n", i, registers[i]);
         }
         String SREG = "";
         for(int i = 0; i < 8; i++)
             SREG = (statusRegister[i] ? "1" : "0") + SREG;
-        System.out.printf("Content of register SREG is: %s:\n", SREG);
-        System.out.printf("Content of register PC is: %s:\n", PC);
+        System.out.printf("Content of register SREG is: %s\n", SREG);
+        System.out.printf("Content of register PC is: %s\n", PC);
+        System.out.print("\n");
+        System.out.println("---------------------------------------------------------------------------------------");
+        System.out.println("---------------------------------------------------------------------------------------");
+        System.out.print("\n");
     }
 
     private void runInstructions() {
         int clockCycles = 0;
+
         while (true) {
+            byte [] oldRegeisters = registers.clone();
+            byte [] oldDataMemory = dataMemory.clone();
+            String oldSREG = "";
+            for(int i = 0; i < 8; i++)
+                oldSREG = (statusRegister[i] ? "1" : "0") + oldSREG;
+            //////////////////////////////////////////////////////////////
             if (PC < numberOfInstructions)
                 fetchFlag = true;
             if(!fetchFlag && ! decodeFlag && !executeFlag)
                 break;
 
-            System.out.printf("*Current Clock Cycle: %d\n", ++clockCycles);
+            System.out.printf("-Current Clock Cycle: %d\n", ++clockCycles);
             if (executeFlag) {
-                System.out.printf("*Current instruction being executed: %d\n", PC - 2);
-                System.out.printf("*Input Parameters for execution:\nOperation: %s\nR1: %s\nR2orIMM: %s\n", fixNumberOfBits(Integer.toBinaryString(opCode), 4),
+                System.out.printf("-Current instruction being executed: %d\n", PC - 2);
+                System.out.println("OPCODE : "+ opCode);
+                System.out.printf("-Input Parameters for execution:\n\tOperation: %s\n\tR1: %s\n\tR2orIMM: %s\n", fixNumberOfBits(Integer.toBinaryString(opCode), 4),
                         fixNumberOfBits(Integer.toBinaryString(R1), 6), fixNumberOfBits(Integer.toBinaryString(R2orIMM), 6));
                 execute();
                 executeFlag = false;
             }
             if (decodeFlag) {
-                System.out.printf("*Current instruction being decoded: %d\n", PC - 1);
-                System.out.printf("*Input Parameters for decoding:\nInstruction: %s\n", fixNumberOfBits(Integer.toBinaryString(IR), 16));
+                System.out.printf("-Current instruction being decoded: %d\n", PC - 1);
+                System.out.printf("-Input Parameters for decoding:\n\tInstruction: %s\n", fixNumberOfBits(Integer.toBinaryString(IR), 16));
                 decode();
                 executeFlag = true;
                 decodeFlag = false;
             }
             if (fetchFlag) {
-                System.out.printf("*Current instruction being fetched: %d\n", PC);
-                System.out.printf("*Input Parameters for fetching:\nPC: %d\n", PC);
+                System.out.printf("-Current instruction being fetched: %d\n", PC);
+                System.out.printf("-Input Parameters for fetching:\n\tPC: %d\n", PC);
                 fetch();
                 decodeFlag = true;
                 fetchFlag = false;
             }
+            /////////////////////////////////////////////////////////////////////////////////////////
+            for(int i =0; i<registers.length; i++){
+                if(registers[i]!=oldRegeisters[i]){
+                    System.out.printf("The value in Register R%s changed from %s to %s\n",i,oldRegeisters[i],registers[i]);
+                }
+            }
+            String SREG = "";
+            for(int i = 0; i < 8; i++)
+                SREG = (statusRegister[i] ? "1" : "0") + SREG;
+            if(!oldSREG.equals(SREG) ){
+                System.out.printf("The value in Register SREG changed from %s to %s\n",oldSREG,SREG);
+            }
+            for(int i =0; i<dataMemory.length; i++){
+                if(dataMemory[i]!=oldDataMemory[i]){
+                    System.out.printf("The value in  Data Memory[%s] changed from %s to %s\n",i,oldDataMemory[i],dataMemory[i]);
+                }
+            }
+            System.out.print("\n");
+            System.out.println("---------------------------------------------------------------------------------------");
+            System.out.println("---------------------------------------------------------------------------------------");
             System.out.print("\n");
         }
     }
@@ -99,13 +148,12 @@ public class Processor {
 
     private void decode() {
         opCode = (byte) (IR >>> 12);
+        // handled negative opCode because IR is exactly 16 bits which results negative opCodes
+        if(opCode<0) opCode+=16;
         R1 = (byte) ((IR >>> 6) & ((1 << 6) - 1));
         R2orIMM = (byte) (IR & ((1 << 6) - 1));
     }
 
-    // yahia first 4
-    //omar next 4
-    //khater last4
     private void execute() {
         switch (opCode) {
             case 0:
@@ -256,7 +304,8 @@ public class Processor {
     }
 
     private void EOR() {
-        byte res = (byte) (registers[R1] ^ R2orIMM);
+        // mistake register[R2orIMM]
+        byte res = (byte) (registers[R1] ^ registers[R2orIMM]);
         setNegative(res < 0);
         setZero(res == 0);
         registers[R1] = res;
